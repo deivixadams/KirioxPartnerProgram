@@ -1,0 +1,163 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum RoleName {
+  ADMINISTRADOR
+  VENDEDOR
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  roleName  RoleName @default(VENDEDOR)
+  createdAt DateTime @default(now())
+
+  vendor Vendor?
+}
+
+enum VendorStatus {
+  ACTIVE
+  SUSPENDED
+  RETIRED
+}
+
+model Vendor {
+  id                   String       @id @default(uuid())
+  name                 String
+  userId               String?      @unique
+  user                 User?        @relation(fields: [userId], references: [id])
+  phone                String?
+  status               VendorStatus @default(ACTIVE)
+  parentVendorId       String?
+  parentVendor         Vendor?      @relation("VendorHierarchy", fields: [parentVendorId], references: [id])
+  subVendors           Vendor[]     @relation("VendorHierarchy")
+  level                Int          @default(1)
+  commissionPercentage Float        @default(0) // Global commission %
+  createdAt            DateTime     @default(now())
+
+  clients                      Client[]
+  deals                        Deal[]
+  commissions                  Commission[]
+  relationshipHistory          VendorRelationshipHistory[]
+  VendorRelationshipHistoryOld VendorRelationshipHistory[] @relation("OldParent")
+  VendorRelationshipHistoryNew VendorRelationshipHistory[] @relation("NewParent")
+}
+
+model Product {
+  id          String   @id @default(uuid())
+  name        String
+  code        String   @unique
+  description String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  deals Deal[]
+}
+
+enum ClientStatus {
+  ASSIGNED
+  UNASSIGNED
+}
+
+model Client {
+  id            String       @id @default(uuid())
+  name          String
+  email         String       @unique
+  phone         String?
+  company       String?
+  ownerVendorId String?
+  status        ClientStatus @default(ASSIGNED)
+  assignedAt    DateTime?    @default(now())
+  createdAt     DateTime     @default(now())
+
+  owner Vendor? @relation(fields: [ownerVendorId], references: [id])
+  deals Deal[]
+}
+
+enum DealStage {
+  PROSPECT
+  CONTACTED
+  NEGOTIATION
+  WON
+  LOST
+}
+
+model Deal {
+  id        String    @id @default(uuid())
+  clientId  String
+  vendorId  String
+  productId String
+  title     String
+  amount    Float
+  stage     DealStage @default(PROSPECT)
+  closedAt  DateTime?
+  result    String?
+  createdAt DateTime  @default(now())
+
+  client      Client        @relation(fields: [clientId], references: [id])
+  vendor      Vendor        @relation(fields: [vendorId], references: [id])
+  product     Product       @relation(fields: [productId], references: [id])
+  history     DealHistory[]
+  commissions Commission[]
+}
+
+model DealHistory {
+  id        String   @id @default(uuid())
+  dealId    String
+  fromStage String?
+  toStage   String
+  note      String?
+  changedBy String
+  createdAt DateTime @default(now())
+
+  deal Deal @relation(fields: [dealId], references: [id])
+}
+
+enum CommissionType {
+  DIRECT
+  OVERRIDE
+}
+
+enum CommissionStatus {
+  PENDING
+  APPROVED
+  PAID
+}
+
+model Commission {
+  id         String           @id @default(uuid())
+  dealId     String
+  vendorId   String
+  type       CommissionType
+  percentage Float
+  amount     Float
+  status     CommissionStatus @default(PENDING)
+  createdAt  DateTime         @default(now())
+
+  deal   Deal   @relation(fields: [dealId], references: [id])
+  vendor Vendor @relation(fields: [vendorId], references: [id])
+}
+
+model VendorRelationshipHistory {
+  id            String   @id @default(uuid())
+  vendorId      String
+  oldParentId   String?
+  newParentId   String?
+  effectiveDate DateTime @default(now())
+  changedBy     String
+  reason        String?
+
+  vendor    Vendor  @relation(fields: [vendorId], references: [id])
+  oldParent Vendor? @relation("OldParent", fields: [oldParentId], references: [id])
+  newParent Vendor? @relation("NewParent", fields: [newParentId], references: [id])
+}
