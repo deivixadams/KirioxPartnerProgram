@@ -18,15 +18,34 @@ He configurado un script unificado en la raíz para que no tengas que abrir múl
 npm run install:all
 ```
 
-### 2. Ejecución completa (DB + Backend + Frontend)
+### 2. Ejecución completa (DB + Frontend)
 ```bash
 npm run dev
 ```
 
 Este comando:
-1. Levanta la base de datos en Docker.
-2. Inicia el servidor NestJS en `http://localhost:3001`.
-3. Inicia el frontend Next.js en `http://localhost:3000`.
+1. Levanta la base de datos PostgreSQL en Docker.
+2. Ejecuta `prisma generate`.
+3. Ejecuta `prisma db push` para crear el esquema en Docker.
+4. Ejecuta `prisma db seed` para cargar datos iniciales.
+5. Inicia el frontend Next.js en `http://localhost:3000`.
+
+---
+
+## 🐳 Integración Docker + PostgreSQL
+Para que la base de datos se ejecute dentro de Docker Desktop:
+
+1. Asegúrate de que Docker Desktop esté instalado y ejecutándose.
+2. Copia `.env.example` a `.env` si aún no existe:
+   ```bash
+   cp .env.example .env
+   ```
+3. Ejecuta:
+   ```bash
+   npm run dev
+   ```
+
+El archivo `docker-compose.yml` define un servicio `db` con PostgreSQL y un volumen persistente.
 
 ---
 
