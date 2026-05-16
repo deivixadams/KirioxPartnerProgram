@@ -120,12 +120,12 @@ function AddVendorModal({ onClose, onSuccess, vendors }: any) {
     email: '',
     password: '',
     parentVendorId: '',
-    commissionPercentage: 0
+    commissionPercentage: 50
   })
   const [loading, setLoading] = useState(false)
 
   const parent = vendors.find((v:any) => v.id === formData.parentVendorId)
-  const maxCommission = parent ? parent.commissionPercentage : 100
+  const childCommission = parent ? 30 : 50
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -209,7 +209,7 @@ function AddVendorModal({ onClose, onSuccess, vendors }: any) {
             <label className="text-xs font-bold text-white/40 uppercase tracking-widest px-1">Jerarquía (Vendedor Padre)</label>
             <select 
               value={formData.parentVendorId}
-              onChange={e => setFormData({ ...formData, parentVendorId: e.target.value, commissionPercentage: 0 })}
+              onChange={e => setFormData({ ...formData, parentVendorId: e.target.value, commissionPercentage: e.target.value ? 30 : 50 })}
               className="w-full bg-white/5 border border-white/10 rounded-2xl py-3 px-4 text-white focus:outline-none appearance-none"
             >
               <option value="" className="bg-[#1e293b]">Independiente (Nivel 1)</option>
@@ -224,16 +224,17 @@ function AddVendorModal({ onClose, onSuccess, vendors }: any) {
               <label className="text-xs font-bold text-white/40 uppercase tracking-widest px-1 flex items-center gap-2">
                 <Percent className="w-3.5 h-3.5" /> Comisión Asignada
               </label>
-              <span className="text-xs text-white/30">Máximo: {maxCommission}%</span>
+              <span className="text-xs text-white/30">Asignado: {childCommission}%</span>
             </div>
             <div className="flex items-center gap-4">
                <input 
                 type="range"
                 min="0"
-                max={maxCommission}
+                max={childCommission}
                 step="1"
                 value={formData.commissionPercentage}
-                onChange={e => setFormData({ ...formData, commissionPercentage: Number(e.target.value) })}
+                disabled
+                onChange={() => {}}
                 className="flex-1 accent-primary-500"
               />
               <div className="bg-white/5 border border-white/10 px-4 py-2 rounded-xl text-white font-bold min-w-[4rem] text-center">
@@ -242,8 +243,8 @@ function AddVendorModal({ onClose, onSuccess, vendors }: any) {
             </div>
             <p className="text-[10px] text-white/20 italic">
               {parent 
-                ? `El padre (${parent.name}) retendrá el ${parent.commissionPercentage - formData.commissionPercentage}% de cada venta.`
-                : "Este vendedor recibirá el porcentaje total definido por cada venta propia."}
+                ? `El padre (${parent.name}) recibirá 20% y este vendedor recibirá 30% de cada venta.`
+                : "Este vendedor recibirá 50% de cada venta."}
             </p>
           </div>
 

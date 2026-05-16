@@ -8,6 +8,7 @@ export const VendorsAPI = {
   getAll: () => api.get('/vendors'),
   getById: (id: string) => api.get(`/vendors/${id}`),
   create: (data: any) => api.post('/vendors', data),
+  updateCommission: (id: string, percentage: number) => api.patch('/vendors', { id, percentage }),
 }
 
 export const ProductsAPI = {
