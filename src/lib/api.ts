@@ -34,3 +34,10 @@ export const ClientsAPI = {
 export const StatsAPI = {
   getOverview: () => api.get('/stats'),
 }
+
+export const AuthAPI = {
+  login: (data: { email: string; password: string }) => api.post('/auth/login', data),
+  confirm: (data: { email: string; code: string }) => api.post('/auth/confirm', data),
+  me: () => api.get('/auth/me'),
+  logout: () => api.post('/auth/logout'),
+}

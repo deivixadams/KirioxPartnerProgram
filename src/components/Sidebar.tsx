@@ -1,8 +1,9 @@
 "use client"
 
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
+import { signOut } from "next-auth/react"
 import { 
   LayoutDashboard, 
   Package, 
@@ -11,7 +12,8 @@ import {
   TrendingUp, 
   DollarSign,
   Settings,
-  Bell
+  Bell,
+  LogOut
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useState, useEffect } from "react"
@@ -33,7 +35,12 @@ interface SidebarProps {
 
 export function Sidebar({ isExpanded, onMouseEnter, onMouseLeave }: SidebarProps) {
   const pathname = usePathname()
+  const router = useRouter()
   const [notifications, setNotifications] = useState<any[]>([])
+
+  async function handleLogout() {
+    await signOut({ callbackUrl: '/login' })
+  }
 
   useEffect(() => {
     const fetchNotifications = async () => {
@@ -169,6 +176,29 @@ export function Sidebar({ isExpanded, onMouseEnter, onMouseLeave }: SidebarProps
             )}
           </AnimatePresence>
         </div>
+
+        {/* Logout button */}
+        <button
+          onClick={handleLogout}
+          className={cn(
+            "flex items-center gap-4 h-10 w-full rounded-xl transition-all duration-300 group text-white/30 hover:text-red-400 hover:bg-red-500/5",
+            isExpanded ? "px-3" : "justify-center px-0"
+          )}
+        >
+          <LogOut className="w-5 h-5 flex-shrink-0" />
+          <AnimatePresence>
+            {isExpanded && (
+              <motion.span
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -10 }}
+                className="text-sm font-medium whitespace-nowrap"
+              >
+                Cerrar Sesión
+              </motion.span>
+            )}
+          </AnimatePresence>
+        </button>
       </div>
     </motion.div>
   )
