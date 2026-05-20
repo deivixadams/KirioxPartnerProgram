@@ -68,7 +68,7 @@ export function Sidebar({ isExpanded, onMouseEnter, onMouseLeave }: SidebarProps
       transition={{ type: "spring", stiffness: 300, damping: 30 }}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
-      className="fixed left-0 top-0 h-full glass-card border-r border-l-0 rounded-none flex flex-col p-4 m-0 z-50 overflow-hidden"
+      className="fixed left-0 top-0 bottom-0 min-w-[80px] glass-card border-r border-l-0 rounded-none flex flex-col p-4 m-0 z-50 overflow-y-auto overflow-x-hidden"
     >
       <div className="flex items-center gap-4 mb-10 px-2 h-10">
         <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-gradient-to-br from-primary-400 to-accent-purple flex items-center justify-center font-bold text-white shadow-lg shadow-primary-500/20">
@@ -179,9 +179,12 @@ export function Sidebar({ isExpanded, onMouseEnter, onMouseLeave }: SidebarProps
 
         {/* Logout button */}
         <button
+          type="button"
+          title="Cerrar Sesión"
+          aria-label="Cerrar Sesión"
           onClick={handleLogout}
           className={cn(
-            "flex items-center gap-4 h-10 w-full rounded-xl transition-all duration-300 group text-white/30 hover:text-red-400 hover:bg-red-500/5",
+            "flex items-center gap-4 h-10 w-full rounded-xl transition-all duration-300 group text-white/60 hover:text-red-400 hover:bg-red-500/5 focus:outline-none focus:ring-2 focus:ring-red-400/30",
             isExpanded ? "px-3" : "justify-center px-0"
           )}
         >
