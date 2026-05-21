@@ -19,8 +19,10 @@ import {
 } from "lucide-react"
 import { ClientsAPI, ProductsAPI, PartnersAPI, DealsAPI } from "@/lib/api"
 import { cn, formatCurrency } from "@/lib/utils"
+import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
 
 export default function ClientsPage() {
+  const { isAdmin, partnerId, loading: userLoading } = useCurrentUser()
   const [clients, setClients] = useState<any[]>([])
   const [products, setProducts] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
@@ -52,6 +54,8 @@ export default function ClientsPage() {
     c.email.toLowerCase().includes(search.toLowerCase()) ||
     c.company?.toLowerCase().includes(search.toLowerCase())
   )
+
+  if (userLoading) return null;
 
   return (
     <div className="space-y-8 pb-10">
@@ -202,6 +206,8 @@ export default function ClientsPage() {
               fetchData()
             }}
             products={products}
+            isAdmin={isAdmin}
+            currentPartnerId={partnerId}
           />
         )}
       </AnimatePresence>
@@ -209,7 +215,7 @@ export default function ClientsPage() {
   )
 }
 
-function AddClientModal({ client, onClose, onSuccess, products }: any) {
+function AddClientModal({ client, onClose, onSuccess, products, isAdmin, currentPartnerId }: any) {
   const [formData, setFormData] = useState({
     name: client?.name || '',
     email: client?.email || '',
@@ -217,7 +223,7 @@ function AddClientModal({ client, onClose, onSuccess, products }: any) {
     company: client?.company || '',
     productId: '',
     dealAmount: '',
-    ownerPartnerId: client?.ownerPartnerId || '' // In real app, this comes from Auth
+    ownerPartnerId: client?.ownerPartnerId || (!isAdmin ? currentPartnerId : '')
   })
   const [partners, setPartners] = useState<any[]>([])
   const [checking, setChecking] = useState(false)
@@ -238,11 +244,11 @@ function AddClientModal({ client, onClose, onSuccess, products }: any) {
       email: client.email || '',
       phone: client.phone || '',
       company: client.company || '',
-      ownerPartnerId: client.ownerPartnerId || '',
+      ownerPartnerId: client.ownerPartnerId || (!isAdmin ? currentPartnerId : ''),
       productId: '',
       dealAmount: ''
     }))
-  }, [client])
+  }, [client, isAdmin, currentPartnerId])
 
   const checkEmail = async (email: string) => {
     if (!email.includes('@')) return
@@ -379,7 +385,7 @@ function AddClientModal({ client, onClose, onSuccess, products }: any) {
             <label className="text-xs font-bold text-white/40 uppercase tracking-widest px-1">Partner Responsable</label>
             <select 
               required
-              disabled={isBlocked}
+              disabled={isBlocked || !isAdmin}
               value={formData.ownerPartnerId}
               onChange={e => setFormData({ ...formData, ownerPartnerId: e.target.value })}
               className="w-full bg-white/5 border border-white/10 rounded-2xl py-3 px-4 text-white focus:outline-none appearance-none disabled:opacity-30"

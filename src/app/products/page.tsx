@@ -5,8 +5,10 @@ import { motion, AnimatePresence } from "framer-motion"
 import { Package, Plus, Tag, CheckCircle2, X } from "lucide-react"
 import { ProductsAPI } from "@/lib/api"
 import { cn } from "@/lib/utils"
+import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
 
 export default function ProductsPage() {
+  const { isAdmin, loading: userLoading } = useCurrentUser()
   const [products, setProducts] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -37,10 +39,12 @@ export default function ProductsPage() {
             Defina y gestione los productos en su red de socios.
           </p>
         </div>
-        <button onClick={() => setIsModalOpen(true)} className="flex items-center gap-2 bg-primary-500 hover:bg-primary-600 text-white px-6 py-3 rounded-2xl font-bold transition-all shadow-lg shadow-primary-500/25">
-          <Plus className="w-5 h-5" />
-          Añadir Producto
-        </button>
+        {isAdmin && (
+          <button onClick={() => setIsModalOpen(true)} className="flex items-center gap-2 bg-primary-500 hover:bg-primary-600 text-white px-6 py-3 rounded-2xl font-bold transition-all shadow-lg shadow-primary-500/25">
+            <Plus className="w-5 h-5" />
+            Añadir Producto
+          </button>
+        )}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

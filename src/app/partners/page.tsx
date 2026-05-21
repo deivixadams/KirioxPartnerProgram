@@ -26,6 +26,7 @@ import {
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { PartnersAPI } from "@/lib/api"
+import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -113,6 +114,7 @@ function computeCommissionPreview(
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function PartnersPage() {
+  const { isAdmin, partnerData, loading: userLoading } = useCurrentUser()
   const [partners, setPartners] = useState<Partner[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
@@ -135,10 +137,27 @@ export default function PartnersPage() {
     fetchData()
   }, [])
 
-  const filteredPartners = Array.isArray(partners) ? partners.filter(p => 
-    p.name.toLowerCase().includes(search.toLowerCase()) ||
-    p.user?.email?.toLowerCase().includes(search.toLowerCase())
-  ) : []
+  const filteredPartners = Array.isArray(partners) ? partners.filter(p => {
+    if (!isAdmin) {
+      // Logic for SOCIO
+      if (!partnerData) return false
+      
+      const visibleIds = [partnerData.id]
+      if (partnerData.parentPartnerId) {
+        visibleIds.push(partnerData.parentPartnerId)
+      }
+      if (partnerData.subPartners && partnerData.subPartners.length > 0) {
+        visibleIds.push(...partnerData.subPartners.map((sub: any) => sub.id))
+      }
+      
+      if (!visibleIds.includes(p.id)) return false
+    }
+
+    return p.name.toLowerCase().includes(search.toLowerCase()) ||
+           p.user?.email?.toLowerCase().includes(search.toLowerCase())
+  }) : []
+
+  if (userLoading) return null;
 
   return (
     <div className="space-y-8 pb-10 relative">
@@ -151,13 +170,15 @@ export default function PartnersPage() {
             Gestione su jerarquía de ventas y distribución de comisiones globales.
           </p>
         </div>
-        <button 
-          onClick={() => setIsAddModalOpen(true)}
-          className="flex items-center gap-2 bg-primary-500 hover:bg-primary-600 text-white px-6 py-3 rounded-2xl font-bold transition-all shadow-lg shadow-primary-500/25"
-        >
-          <Plus className="w-5 h-5" />
-          Nuevo Partner
-        </button>
+        {isAdmin && (
+          <button 
+            onClick={() => setIsAddModalOpen(true)}
+            className="flex items-center gap-2 bg-primary-500 hover:bg-primary-600 text-white px-6 py-3 rounded-2xl font-bold transition-all shadow-lg shadow-primary-500/25"
+          >
+            <Plus className="w-5 h-5" />
+            Nuevo Partner
+          </button>
+        )}
       </div>
 
       <div className="relative flex-1 max-w-2xl">
@@ -177,6 +198,7 @@ export default function PartnersPage() {
             key={partner.id} 
             partner={partner}
             onEdit={() => setEditingPartner(partner)}
+            isAdmin={isAdmin}
           />
         ))}
 
@@ -230,7 +252,7 @@ export default function PartnersPage() {
 
 // ─── Partner Card ─────────────────────────────────────────────────────────────
 
-function PartnerCard({ partner, onEdit }: { partner: Partner; onEdit: () => void }) {
+function PartnerCard({ partner, onEdit, isAdmin }: { partner: Partner; onEdit: () => void; isAdmin: boolean }) {
   const [showChildren, setShowChildren] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
@@ -332,34 +354,36 @@ function PartnerCard({ partner, onEdit }: { partner: Partner; onEdit: () => void
           )}
 
           {/* Context menu */}
-          <div className="relative" ref={menuRef}>
-            <button
-              onClick={() => setMenuOpen(v => !v)}
-              className="p-3 rounded-2xl hover:bg-white/5 transition-all text-white/30 hover:text-white"
-            >
-              <MoreVertical className="w-5 h-5" />
-            </button>
+          {isAdmin && (
+            <div className="relative" ref={menuRef}>
+              <button
+                onClick={() => setMenuOpen(v => !v)}
+                className="p-3 rounded-2xl hover:bg-white/5 transition-all text-white/30 hover:text-white"
+              >
+                <MoreVertical className="w-5 h-5" />
+              </button>
 
-            <AnimatePresence>
-              {menuOpen && (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.92, y: -4 }}
-                  animate={{ opacity: 1, scale: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.92, y: -4 }}
-                  transition={{ duration: 0.12 }}
-                  className="absolute right-0 top-full mt-2 z-50 min-w-[160px] glass-card border border-white/10 rounded-2xl py-2 shadow-2xl"
-                >
-                  <button
-                    onClick={() => { setMenuOpen(false); onEdit() }}
-                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-white/70 hover:text-white hover:bg-white/5 transition-colors"
+              <AnimatePresence>
+                {menuOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.92, y: -4 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.92, y: -4 }}
+                    transition={{ duration: 0.12 }}
+                    className="absolute right-0 top-full mt-2 z-50 min-w-[160px] glass-card border border-white/10 rounded-2xl py-2 shadow-2xl"
                   >
-                    <Edit3 className="w-4 h-4 text-primary-400" />
-                    Editar partner
-                  </button>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
+                    <button
+                      onClick={() => { setMenuOpen(false); onEdit() }}
+                      className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-white/70 hover:text-white hover:bg-white/5 transition-colors"
+                    >
+                      <Edit3 className="w-4 h-4 text-primary-400" />
+                      Editar partner
+                    </button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          )}
         </div>
       </div>
 
