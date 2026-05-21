@@ -18,9 +18,9 @@ export class UsersService {
     const user = await prisma.user.findUnique({
       where: { id: userId },
       include: {
-        vendor: {
+        partner: {
           include: {
-            parentVendor: true
+            parentPartner: true
           }
         }
       }

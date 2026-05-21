@@ -4,33 +4,33 @@ import { CommissionsService } from './commissions.service';
 
 export class DealsService {
   static async create(data: any) {
-    const { clientId, vendorId, productId, title, amount } = data;
+    const { clientId, partnerId, productId, title, amount } = data;
 
-    // RULE: A vendor can only create deals for their OWN clients
+    // RULE: A partner can only create deals for their OWN clients
     const client = await prisma.client.findUnique({
       where: { id: clientId }
     });
 
     if (!client) throw new Error('Client not found');
     if (client.status === ClientStatus.UNASSIGNED) {
-      // If unassigned, the vendor can capture it
+      // If unassigned, the partner can capture it
       await prisma.client.update({
         where: { id: clientId },
         data: {
-          ownerVendorId: vendorId,
+          ownerPartnerId: partnerId,
           status: ClientStatus.ASSIGNED,
           assignedAt: new Date()
         }
       });
-    } else if (client.ownerVendorId !== vendorId) {
-      throw new Error('This client belongs to another vendor');
+    } else if (client.ownerPartnerId !== partnerId) {
+      throw new Error('This client belongs to another partner');
     }
 
     return prisma.$transaction(async (tx) => {
       const deal = await tx.deal.create({
         data: {
           clientId,
-          vendorId,
+          partnerId,
           productId,
           title,
           amount,
@@ -42,7 +42,7 @@ export class DealsService {
         data: {
           dealId: deal.id,
           toStage: DealStage.PROSPECT,
-          changedBy: vendorId,
+          changedBy: partnerId,
           note: 'Deal created',
         },
       });
@@ -91,7 +91,7 @@ export class DealsService {
           where: { id: deal.clientId },
           data: {
             status: ClientStatus.UNASSIGNED,
-            ownerVendorId: null,
+            ownerPartnerId: null,
             assignedAt: null
           }
         });
@@ -105,7 +105,7 @@ export class DealsService {
     return prisma.deal.findMany({
       include: {
         client: true,
-        vendor: true,
+        partner: true,
         product: true,
         history: true,
       },

@@ -149,7 +149,7 @@ function DealCard({ deal, onMove }: { deal: any, onMove: (s: string) => void }) 
         </div>
         <div className="flex items-center gap-2 text-xs text-white/50">
           <User className="w-3.5 h-3.5" />
-          <span>{deal.vendor.name}</span>
+          <span>{deal.partner.name}</span>
         </div>
         <div className="flex items-center gap-2 text-xs text-white/50">
           <CreditCard className="w-3.5 h-3.5" />

@@ -20,7 +20,7 @@ import { useState, useEffect } from "react"
 
 const navigation = [
   { name: 'Tablero', href: '/', icon: LayoutDashboard },
-  { name: 'Vendedores', href: '/vendors', icon: Users },
+  { name: 'Partners', href: '/partners', icon: Users },
   { name: 'Productos', href: '/products', icon: Package },
   { name: 'Clientes', href: '/clients', icon: UserCircle },
   { name: 'Pipeline de Ventas', href: '/pipeline', icon: TrendingUp },

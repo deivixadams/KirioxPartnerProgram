@@ -102,7 +102,7 @@ export default function CommissionsPage() {
           <table className="w-full">
             <thead>
               <tr className="text-left text-[10px] uppercase font-bold text-white/30 border-b border-white/5">
-                <th className="px-8 py-4">Vendedor</th>
+                <th className="px-8 py-4">Partner</th>
                 <th className="px-8 py-4">Negocio</th>
                 <th className="px-8 py-4 text-center">Tipo</th>
                 <th className="px-8 py-4 text-right">Tasa</th>
@@ -117,9 +117,9 @@ export default function CommissionsPage() {
                   <td className="px-8 py-4">
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-xs font-bold">
-                        {comm.vendor.name[0]}
+                        {comm.partner.name[0]}
                       </div>
-                      <span className="text-sm font-medium">{comm.vendor.name}</span>
+                      <span className="text-sm font-medium">{comm.partner.name}</span>
                     </div>
                   </td>
                   <td className="px-8 py-4">

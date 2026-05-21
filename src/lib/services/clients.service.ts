@@ -3,7 +3,7 @@ import { ClientStatus } from '@prisma/client';
 
 export class ClientsService {
   static async create(data: any) {
-    const { name, email, phone, company, ownerVendorId } = data;
+    const { name, email, phone, company, ownerPartnerId } = data;
 
     // Check if email already exists
     const existingClient = await prisma.client.findUnique({
@@ -11,7 +11,7 @@ export class ClientsService {
     });
 
     if (existingClient && existingClient.status === ClientStatus.ASSIGNED) {
-      throw new Error('This client is already registered and assigned to a vendor');
+      throw new Error('This client is already registered and assigned to a partner');
     }
 
     if (existingClient && existingClient.status === ClientStatus.UNASSIGNED) {
@@ -22,7 +22,7 @@ export class ClientsService {
           name,
           phone,
           company,
-          ownerVendorId,
+          ownerPartnerId,
           status: ClientStatus.ASSIGNED,
           assignedAt: new Date()
         }
@@ -36,7 +36,7 @@ export class ClientsService {
         email,
         phone,
         company,
-        ownerVendorId,
+        ownerPartnerId,
         status: ClientStatus.ASSIGNED,
         assignedAt: new Date()
       }
@@ -74,7 +74,7 @@ export class ClientsService {
       },
       data: {
         status: ClientStatus.UNASSIGNED,
-        ownerVendorId: null,
+        ownerPartnerId: null,
         assignedAt: null
       }
     });

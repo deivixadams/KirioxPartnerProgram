@@ -8,29 +8,29 @@ import {
   Briefcase 
 } from "lucide-react"
 import { formatCurrency } from "@/lib/utils"
-import { StatsAPI, DealsAPI, VendorsAPI } from "@/lib/api"
+import { StatsAPI, DealsAPI, PartnersAPI } from "@/lib/api"
 
 export default function Dashboard() {
   const [stats, setStats] = useState({
     totalSales: 0,
-    vendorCount: 0,
+    partnerCount: 0,
     pendingCommissions: 0,
     openDeals: 0
   })
   const [recentDeals, setRecentDeals] = useState<any[]>([])
-  const [topVendors, setTopVendors] = useState<any[]>([])
+  const [topPartners, setTopPartners] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     Promise.all([
       StatsAPI.getOverview(),
       DealsAPI.getAll(),
-      VendorsAPI.getAll()
-    ]).then(([statsRes, dealsRes, vendorsRes]) => {
+      PartnersAPI.getAll()
+    ]).then(([statsRes, dealsRes, partnersRes]) => {
       setStats(statsRes.data)
       setRecentDeals(dealsRes.data.slice(0, 3))
-      // Sort vendors by products count or similar simple metric for now
-      setTopVendors(vendorsRes.data.slice(0, 3))
+      // Sort partners by products count or similar simple metric for now
+      setTopPartners(partnersRes.data.slice(0, 3))
       setLoading(false)
     }).catch(err => {
       console.error("Error loading dashboard data", err)
@@ -59,8 +59,8 @@ export default function Dashboard() {
           loading={loading}
         />
         <StatCard 
-          title="Vendedores Activos" 
-          value={stats.vendorCount} 
+          title="Partners Activos" 
+          value={stats.partnerCount} 
           change={loading ? "..." : "En red"} 
           icon={Users}
           color="purple"
@@ -98,7 +98,7 @@ export default function Dashboard() {
               <DealItem 
                 key={deal.id}
                 client={deal.client?.name || "Cliente"} 
-                vendor={deal.vendor?.name || "Vendedor"} 
+                partner={deal.partner?.name || "Partner"} 
                 product={deal.product?.name || "Producto"} 
                 amount={deal.amount} 
                 stage={deal.stage} 
@@ -111,19 +111,19 @@ export default function Dashboard() {
         </div>
 
         <div className="glass-card p-8 rounded-3xl h-full">
-          <h2 className="text-xl font-bold mb-8 text-white">Vendedores Destacados</h2>
+          <h2 className="text-xl font-bold mb-8 text-white">Partners Destacados</h2>
           <div className="space-y-6">
-            {topVendors.map((vendor) => (
-              <VendorRank 
-                key={vendor.id}
-                name={vendor.name} 
-                level={vendor.level} 
-                sales={vendor.deals?.filter((d: any) => d.stage === 'WON').reduce((acc: number, d: any) => acc + d.amount, 0) || 0} 
-                commission={vendor.commissions?.reduce((acc: number, c: any) => acc + c.amount, 0) || 0} 
+            {topPartners.map((partner) => (
+              <PartnerRank 
+                key={partner.id}
+                name={partner.name} 
+                level={partner.level} 
+                sales={partner.deals?.filter((d: any) => d.stage === 'WON').reduce((acc: number, d: any) => acc + d.amount, 0) || 0} 
+                commission={partner.commissions?.reduce((acc: number, c: any) => acc + c.amount, 0) || 0} 
               />
             ))}
-            {topVendors.length === 0 && !loading && (
-              <p className="text-white/30 italic text-center py-4">No hay vendedores.</p>
+            {topPartners.length === 0 && !loading && (
+              <p className="text-white/30 italic text-center py-4">No hay partners.</p>
             )}
           </div>
         </div>
@@ -161,7 +161,7 @@ function StatCard({ title, value, change, icon: Icon, color, loading }: any) {
   )
 }
 
-function DealItem({ client, vendor, product, amount, stage }: any) {
+function DealItem({ client, partner, product, amount, stage }: any) {
   const stageMap: any = {
     WON: 'GANADO',
     NEGOCIATION: 'NEGOCIACIÓN',
@@ -177,7 +177,7 @@ function DealItem({ client, vendor, product, amount, stage }: any) {
       </div>
       <div className="flex-1">
         <p className="font-semibold text-white/90">{client}</p>
-        <p className="text-xs text-white/40">{vendor} • {product}</p>
+        <p className="text-xs text-white/40">{partner} • {product}</p>
       </div>
       <div className="text-right">
         <p className="font-bold text-white/90">{formatCurrency(amount)}</p>
@@ -193,7 +193,7 @@ function DealItem({ client, vendor, product, amount, stage }: any) {
   )
 }
 
-function VendorRank({ name, level, sales, commission }: any) {
+function PartnerRank({ name, level, sales, commission }: any) {
   return (
     <div className="flex items-center gap-4 group">
       <div className="w-10 h-10 rounded-full bg-gradient-to-br from-white/10 to-white/5 border border-white/10 flex items-center justify-center text-sm font-bold text-white/50">

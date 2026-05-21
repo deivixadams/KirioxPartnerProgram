@@ -17,7 +17,7 @@ import {
   Clock, 
   UserPlus 
 } from "lucide-react"
-import { ClientsAPI, ProductsAPI, VendorsAPI, DealsAPI } from "@/lib/api"
+import { ClientsAPI, ProductsAPI, PartnersAPI, DealsAPI } from "@/lib/api"
 import { cn, formatCurrency } from "@/lib/utils"
 
 export default function ClientsPage() {
@@ -153,7 +153,7 @@ export default function ClientsPage() {
 
               <div className="mt-6 pt-4 border-t border-white/5 flex items-center justify-between">
                 <div>
-                  <p className="text-[10px] text-white/30 uppercase tracking-widest font-bold">Vendedor</p>
+                  <p className="text-[10px] text-white/30 uppercase tracking-widest font-bold">Partner</p>
                   <span className={cn(
                     "text-xs font-bold",
                     isUnassigned ? "text-white/20 italic" : "text-white/70"
@@ -201,15 +201,15 @@ function AddClientModal({ onClose, onSuccess, products }: any) {
     phone: '',
     company: '',
     productId: '',
-    ownerVendorId: '' // In real app, this comes from Auth
+    ownerPartnerId: '' // In real app, this comes from Auth
   })
-  const [vendors, setVendors] = useState<any[]>([])
+  const [partners, setPartners] = useState<any[]>([])
   const [checking, setChecking] = useState(false)
   const [exists, setExists] = useState<any>(null)
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
-    VendorsAPI.getAll().then(res => setVendors(res.data))
+    PartnersAPI.getAll().then(res => setPartners(res.data))
   }, [])
 
   const checkEmail = async (email: string) => {
@@ -235,7 +235,7 @@ function AddClientModal({ onClose, onSuccess, products }: any) {
       if (formData.productId) {
         await DealsAPI.create({
           clientId: client.id,
-          vendorId: formData.ownerVendorId,
+          partnerId: formData.ownerPartnerId,
           productId: formData.productId,
           title: `Interés inicial: ${products.find((p:any) => p.id === formData.productId)?.name}`,
           amount: 0 // Will be defined later
@@ -304,7 +304,7 @@ function AddClientModal({ onClose, onSuccess, products }: any) {
                 isBlocked ? "text-red-400" : "text-emerald-400"
               )}>
                 {isBlocked 
-                  ? `Ya registrado por: ${exists.owner?.name || 'otro vendedor'}` 
+                  ? `Ya registrado por: ${exists.owner?.name || 'otro partner'}` 
                   : "Cliente liberado - ¡Puedes capturarlo!"}
               </p>
             )}
@@ -337,16 +337,16 @@ function AddClientModal({ onClose, onSuccess, products }: any) {
           </div>
 
           <div className="space-y-2">
-            <label className="text-xs font-bold text-white/40 uppercase tracking-widest px-1">Vendedor Responsable</label>
+            <label className="text-xs font-bold text-white/40 uppercase tracking-widest px-1">Partner Responsable</label>
             <select 
               required
               disabled={isBlocked}
-              value={formData.ownerVendorId}
-              onChange={e => setFormData({ ...formData, ownerVendorId: e.target.value })}
+              value={formData.ownerPartnerId}
+              onChange={e => setFormData({ ...formData, ownerPartnerId: e.target.value })}
               className="w-full bg-white/5 border border-white/10 rounded-2xl py-3 px-4 text-white focus:outline-none appearance-none disabled:opacity-30"
             >
-              <option value="" className="bg-[#1e293b]">Seleccionar Vendedor...</option>
-              {vendors.map((v: any) => (
+              <option value="" className="bg-[#1e293b]">Seleccionar Partner...</option>
+              {partners.map((v: any) => (
                 <option key={v.id} value={v.id} className="bg-[#1e293b]">{v.name}</option>
               ))}
             </select>

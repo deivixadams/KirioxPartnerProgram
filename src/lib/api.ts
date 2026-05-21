@@ -4,15 +4,16 @@ const api = axios.create({
   baseURL: '/api', // Use internal Next.js API routes
 })
 
-export const VendorsAPI = {
-  getAll: () => api.get('/vendors'),
-  getById: (id: string) => api.get(`/vendors/${id}`),
-  create: (data: any) => api.post('/vendors', data),
-  updateCommission: (id: string, percentage: number) => api.patch('/vendors', { id, percentage }),
+export const PartnersAPI = {
+  getAll: () => api.get('/partners'),
+  getById: (id: string) => api.get(`/partners/${id}`),
+  create: (data: any) => api.post('/partners', data),
+  updateCommission: (id: string, percentage: number) => api.patch('/partners', { id, percentage }),
 }
 
 export const ProductsAPI = {
   getAll: () => api.get('/products'),
+  create: (data: any) => api.post('/products', data),
 }
 
 export const DealsAPI = {

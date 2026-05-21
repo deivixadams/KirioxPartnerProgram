@@ -23,7 +23,7 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  vendor Vendor?
+  partner Partner?
   loginChallenges LoginChallenge[]
 }
 
@@ -39,32 +39,36 @@ model LoginChallenge {
   user      User     @relation(fields: [userId], references: [id])
 }
 
-enum VendorStatus {
+enum PartnerStatus {
   ACTIVE
   SUSPENDED
   RETIRED
+
+  @@map("VendorStatus")
 }
 
-model Vendor {
-  id                   String       @id @default(uuid())
+model Partner {
+  id                   String        @id @default(uuid())
   name                 String
-  userId               String?      @unique
-  user                 User?        @relation(fields: [userId], references: [id])
+  userId               String?       @unique
+  user                 User?         @relation(fields: [userId], references: [id])
   phone                String?
-  status               VendorStatus @default(ACTIVE)
-  parentVendorId       String?
-  parentVendor         Vendor?      @relation("VendorHierarchy", fields: [parentVendorId], references: [id])
-  subVendors           Vendor[]     @relation("VendorHierarchy")
-  level                Int          @default(1)
-  commissionPercentage Float        @default(0) // Global commission %
-  createdAt            DateTime     @default(now())
+  status               PartnerStatus @default(ACTIVE)
+  parentPartnerId      String?       @map("parentVendorId")
+  parentPartner        Partner?      @relation("PartnerHierarchy", fields: [parentPartnerId], references: [id])
+  subPartners          Partner[]     @relation("PartnerHierarchy")
+  level                Int           @default(1)
+  commissionPercentage Float         @default(0)
+  createdAt            DateTime      @default(now())
 
-  clients                      Client[]
-  deals                        Deal[]
-  commissions                  Commission[]
-  relationshipHistory          VendorRelationshipHistory[]
-  VendorRelationshipHistoryOld VendorRelationshipHistory[] @relation("OldParent")
-  VendorRelationshipHistoryNew VendorRelationshipHistory[] @relation("NewParent")
+  clients                        Client[]
+  deals                          Deal[]
+  commissions                    Commission[]
+  relationshipHistory            PartnerRelationshipHistory[]
+  PartnerRelationshipHistoryOld  PartnerRelationshipHistory[] @relation("OldParent")
+  PartnerRelationshipHistoryNew  PartnerRelationshipHistory[] @relation("NewParent")
+
+  @@map("Vendor")
 }
 
 model Product {
@@ -89,12 +93,12 @@ model Client {
   email         String       @unique
   phone         String?
   company       String?
-  ownerVendorId String?
+  ownerPartnerId String?      @map("ownerVendorId")
   status        ClientStatus @default(ASSIGNED)
   assignedAt    DateTime?    @default(now())
   createdAt     DateTime     @default(now())
 
-  owner Vendor? @relation(fields: [ownerVendorId], references: [id])
+  owner Partner? @relation(fields: [ownerPartnerId], references: [id])
   deals Deal[]
 }
 
@@ -109,7 +113,7 @@ enum DealStage {
 model Deal {
   id        String    @id @default(uuid())
   clientId  String
-  vendorId  String
+  partnerId String    @map("vendorId")
   productId String
   title     String
   amount    Float
@@ -118,10 +122,10 @@ model Deal {
   result    String?
   createdAt DateTime  @default(now())
 
-  client      Client        @relation(fields: [clientId], references: [id])
-  vendor      Vendor        @relation(fields: [vendorId], references: [id])
-  product     Product       @relation(fields: [productId], references: [id])
-  history     DealHistory[]
+  client  Client  @relation(fields: [clientId], references: [id])
+  partner Partner @relation(fields: [partnerId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
+  history DealHistory[]
   commissions Commission[]
 }
 
@@ -151,27 +155,29 @@ enum CommissionStatus {
 model Commission {
   id         String           @id @default(uuid())
   dealId     String
-  vendorId   String
+  partnerId  String           @map("vendorId")
   type       CommissionType
   percentage Float
   amount     Float
   status     CommissionStatus @default(PENDING)
   createdAt  DateTime         @default(now())
 
-  deal   Deal   @relation(fields: [dealId], references: [id])
-  vendor Vendor @relation(fields: [vendorId], references: [id])
+  deal    Deal    @relation(fields: [dealId], references: [id])
+  partner Partner @relation(fields: [partnerId], references: [id])
 }
 
-model VendorRelationshipHistory {
+model PartnerRelationshipHistory {
   id            String   @id @default(uuid())
-  vendorId      String
-  oldParentId   String?
-  newParentId   String?
+  partnerId     String   @map("vendorId")
+  oldParentId   String?  @map("oldParentId")
+  newParentId   String?  @map("newParentId")
   effectiveDate DateTime @default(now())
   changedBy     String
   reason        String?
 
-  vendor    Vendor  @relation(fields: [vendorId], references: [id])
-  oldParent Vendor? @relation("OldParent", fields: [oldParentId], references: [id])
-  newParent Vendor? @relation("NewParent", fields: [newParentId], references: [id])
+  partner    Partner  @relation(fields: [partnerId], references: [id])
+  oldParent  Partner? @relation("OldParent", fields: [oldParentId], references: [id])
+  newParent  Partner? @relation("NewParent", fields: [newParentId], references: [id])
+
+  @@map("VendorRelationshipHistory")
 }
