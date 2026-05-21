@@ -60,16 +60,20 @@ export class ClientsService {
     });
   }
 
-  // Automatic cleanup logic (can be triggered by scheduler or manually)
+  /**
+   * Release stale clients after 30 days of assignment.
+   *
+   * This can be invoked manually, from a scheduled task, or via API:
+   * PATCH /api/clients?action=release-stale
+   */
   static async releaseStaleClients() {
-    const sixtyDaysAgo = new Date();
-    sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
 
     return prisma.client.updateMany({
       where: {
         status: ClientStatus.ASSIGNED,
         assignedAt: {
-          lt: sixtyDaysAgo
+          lt: thirtyDaysAgo
         }
       },
       data: {

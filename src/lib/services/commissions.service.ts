@@ -19,8 +19,10 @@ export class CommissionsService {
     const partner = deal.partner;
     const commissions: Prisma.CommissionCreateManyInput[] = [];
 
-    // 1. Direct Commission (Partner who closes)
-    const directPercentage = partner.commissionPercentage;
+    // Determine direct commission percentage based on partner level
+    // Level 1 (no parent): 50% | Level 2 (with parent): use partner.commissionPercentage
+    const isLevel1 = !partner.parentPartner;
+    const directPercentage = isLevel1 ? 50 : partner.commissionPercentage;
     const directAmount = (deal.amount * directPercentage) / 100;
 
     commissions.push({
@@ -31,21 +33,19 @@ export class CommissionsService {
       amount: directAmount,
     });
 
-    // 2. Override Commission (Parent partner differential)
+    // Override Commission: Parent partner gets 20% (only if partner is Level 2)
     if (partner.parentPartner) {
       const parent = partner.parentPartner;
-      const overridePercentage = Math.max(0, parent.commissionPercentage - partner.commissionPercentage);
+      const overridePercentage = 20; // Fixed 20% for parent
       const overrideAmount = (deal.amount * overridePercentage) / 100;
 
-      if (overridePercentage > 0) {
-        commissions.push({
-          dealId: deal.id,
-          partnerId: parent.id,
-          type: CommissionType.OVERRIDE,
-          percentage: overridePercentage,
-          amount: overrideAmount,
-        });
-      }
+      commissions.push({
+        dealId: deal.id,
+        partnerId: parent.id,
+        type: CommissionType.OVERRIDE,
+        percentage: overridePercentage,
+        amount: overrideAmount,
+      });
     }
 
     return prisma.commission.createMany({
