@@ -46,7 +46,7 @@ async function main() {
     create: {
       email: 'pedwar@kiriox.com',
       password: hashedPassword,
-      roleName: RoleName.VENDEDOR,
+      roleName: RoleName.SOCIO,
     }
   })
 

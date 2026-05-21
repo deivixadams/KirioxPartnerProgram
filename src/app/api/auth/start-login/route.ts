@@ -26,6 +26,21 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Credenciales inválidas' }, { status: 401 })
     }
 
+    // Check partner account status before issuing OTP
+    const partner = await prisma.partner.findUnique({ where: { userId: user.id } })
+    if (partner?.status === 'SUSPENDED') {
+      return NextResponse.json(
+        { error: 'Tu cuenta ha sido suspendida. Contacta al administrador para más información.' },
+        { status: 403 }
+      )
+    }
+    if (partner?.status === 'RETIRED') {
+      return NextResponse.json(
+        { error: 'Tu cuenta ha sido retirada y ya no tiene acceso al programa.' },
+        { status: 403 }
+      )
+    }
+
     // Create challenge
     const code = crypto.randomInt(100000, 999999).toString()
     const hashedCode = await bcrypt.hash(code, 10)

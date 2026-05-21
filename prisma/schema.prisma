@@ -12,14 +12,14 @@ datasource db {
 
 enum RoleName {
   ADMINISTRADOR
-  VENDEDOR
+  SOCIO
 }
 
 model User {
   id        String   @id @default(uuid())
   email     String   @unique
   password  String
-  roleName  RoleName @default(VENDEDOR)
+  roleName  RoleName @default(SOCIO)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

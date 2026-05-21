@@ -8,6 +8,7 @@ export const PartnersAPI = {
   getAll: () => api.get('/partners'),
   getById: (id: string) => api.get(`/partners/${id}`),
   create: (data: any) => api.post('/partners', data),
+  update: (id: string, data: any) => api.patch(`/partners/${id}`, data),
   updateCommission: (id: string, percentage: number) => api.patch('/partners', { id, percentage }),
 }
 

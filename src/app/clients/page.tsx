@@ -26,6 +26,7 @@ export default function ClientsPage() {
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [selectedClient, setSelectedClient] = useState<any | null>(null)
 
   useEffect(() => {
     fetchData()
@@ -64,7 +65,10 @@ export default function ClientsPage() {
           </p>
         </div>
         <button 
-          onClick={() => setIsModalOpen(true)}
+          onClick={() => {
+            setSelectedClient(null)
+            setIsModalOpen(true)
+          }}
           className="flex items-center gap-2 bg-primary-500 hover:bg-primary-600 text-white px-6 py-3 rounded-2xl font-bold transition-all shadow-lg shadow-primary-500/25"
         >
           <Plus className="w-5 h-5" />
@@ -162,7 +166,13 @@ export default function ClientsPage() {
                   </span>
                 </div>
                 {isUnassigned && (
-                  <button className="bg-primary-500/10 text-primary-400 p-2 rounded-xl hover:bg-primary-500 hover:text-white transition-all">
+                  <button
+                    onClick={() => {
+                      setSelectedClient(client)
+                      setIsModalOpen(true)
+                    }}
+                    className="bg-primary-500/10 text-primary-400 p-2 rounded-xl hover:bg-primary-500 hover:text-white transition-all"
+                  >
                     <UserPlus className="w-4 h-4" />
                   </button>
                 )}
@@ -181,9 +191,14 @@ export default function ClientsPage() {
       <AnimatePresence>
         {isModalOpen && (
           <AddClientModal 
-            onClose={() => setIsModalOpen(false)} 
+            client={selectedClient}
+            onClose={() => {
+              setIsModalOpen(false)
+              setSelectedClient(null)
+            }} 
             onSuccess={() => {
               setIsModalOpen(false)
+              setSelectedClient(null)
               fetchData()
             }}
             products={products}
@@ -194,23 +209,40 @@ export default function ClientsPage() {
   )
 }
 
-function AddClientModal({ onClose, onSuccess, products }: any) {
+function AddClientModal({ client, onClose, onSuccess, products }: any) {
   const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    company: '',
+    name: client?.name || '',
+    email: client?.email || '',
+    phone: client?.phone || '',
+    company: client?.company || '',
     productId: '',
-    ownerPartnerId: '' // In real app, this comes from Auth
+    dealAmount: '',
+    ownerPartnerId: client?.ownerPartnerId || '' // In real app, this comes from Auth
   })
   const [partners, setPartners] = useState<any[]>([])
   const [checking, setChecking] = useState(false)
   const [exists, setExists] = useState<any>(null)
   const [loading, setLoading] = useState(false)
+  const isAssignment = Boolean(client)
 
   useEffect(() => {
     PartnersAPI.getAll().then(res => setPartners(res.data))
   }, [])
+
+  useEffect(() => {
+    if (!client) return
+
+    setFormData((prev) => ({
+      ...prev,
+      name: client.name || '',
+      email: client.email || '',
+      phone: client.phone || '',
+      company: client.company || '',
+      ownerPartnerId: client.ownerPartnerId || '',
+      productId: '',
+      dealAmount: ''
+    }))
+  }, [client])
 
   const checkEmail = async (email: string) => {
     if (!email.includes('@')) return
@@ -233,12 +265,17 @@ function AddClientModal({ onClose, onSuccess, products }: any) {
       const { data: client } = await ClientsAPI.create(formData)
       // 2. Create initial deal automatically
       if (formData.productId) {
+        const amount = Number(formData.dealAmount)
+        if (isNaN(amount) || amount <= 0) {
+          throw new Error('El precio del trato debe ser un número válido mayor a cero')
+        }
+
         await DealsAPI.create({
           clientId: client.id,
           partnerId: formData.ownerPartnerId,
           productId: formData.productId,
           title: `Interés inicial: ${products.find((p:any) => p.id === formData.productId)?.name}`,
-          amount: 0 // Will be defined later
+          amount
         })
       }
       onSuccess()
@@ -267,74 +304,76 @@ function AddClientModal({ onClose, onSuccess, products }: any) {
         className="glass-card w-full max-w-xl p-8 rounded-[2rem] relative z-[101]"
       >
         <div className="flex items-center justify-between mb-8">
-          <h2 className="text-2xl font-bold text-white">Registrar Prospecto</h2>
+          <h2 className="text-2xl font-bold text-white">Asignar Prospecto</h2>
           <button onClick={onClose} className="p-2 hover:bg-white/5 rounded-xl transition-colors text-white/40 hover:text-white">
             <X className="w-6 h-6" />
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-5">
-          <div className="space-y-2">
-            <label className="text-xs font-bold text-white/40 uppercase tracking-widest px-1">Correo Electrónico</label>
-            <div className="relative">
-              <input 
-                required
-                type="email"
-                placeholder="email@ejemplo.com"
-                value={formData.email}
-                onChange={e => {
-                  setFormData({ ...formData, email: e.target.value })
-                  checkEmail(e.target.value)
-                }}
-                className={cn(
-                  "w-full bg-white/5 border rounded-2xl py-3 px-4 text-white focus:outline-none transition-all",
-                  isBlocked ? "border-red-500/50" : "border-white/10"
-                )}
-              />
-              <div className="absolute right-4 top-1/2 -translate-y-1/2">
-                {checking && <div className="w-4 h-4 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />}
-                {exists && !checking && (
-                  isBlocked ? <AlertCircle className="w-5 h-5 text-red-500" /> : <CheckCircle2 className="w-5 h-5 text-emerald-500" />
+          {!isAssignment && (
+            <>
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-white/40 uppercase tracking-widest px-1">Correo Electrónico</label>
+                <div className="relative">
+                  <input 
+                    required
+                    type="email"
+                    placeholder="email@ejemplo.com"
+                    value={formData.email}
+                    onChange={e => {
+                      setFormData({ ...formData, email: e.target.value })
+                      checkEmail(e.target.value)
+                    }}
+                    className={cn(
+                      "w-full bg-white/5 border rounded-2xl py-3 px-4 text-white focus:outline-none transition-all",
+                      isBlocked ? "border-red-500/50" : "border-white/10"
+                    )}
+                  />
+                  <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                    {checking && <div className="w-4 h-4 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />}
+                    {exists && !checking && (
+                      isBlocked ? <AlertCircle className="w-5 h-5 text-red-500" /> : <CheckCircle2 className="w-5 h-5 text-emerald-500" />
+                    )}
+                  </div>
+                </div>
+                {exists && (
+                  <p className={cn(
+                    "text-[10px] font-bold uppercase tracking-tight px-1",
+                    isBlocked ? "text-red-400" : "text-emerald-400"
+                  )}>
+                    {isBlocked 
+                      ? `Ya registrado por: ${exists.owner?.name || 'otro partner'}` 
+                      : "Cliente liberado - ¡Puedes capturarlo!"}
+                  </p>
                 )}
               </div>
-            </div>
-            {exists && (
-              <p className={cn(
-                "text-[10px] font-bold uppercase tracking-tight px-1",
-                isBlocked ? "text-red-400" : "text-emerald-400"
-              )}>
-                {isBlocked 
-                  ? `Ya registrado por: ${exists.owner?.name || 'otro partner'}` 
-                  : "Cliente liberado - ¡Puedes capturarlo!"}
-              </p>
-            )}
-          </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label className="text-xs font-bold text-white/40 uppercase tracking-widest px-1">Nombre</label>
-              <input 
-                required
-                disabled={isBlocked}
-                type="text"
-                placeholder="Ej. Juan Pérez"
-                value={formData.name}
-                onChange={e => setFormData({ ...formData, name: e.target.value })}
-                className="w-full bg-white/5 border border-white/10 rounded-2xl py-3 px-4 text-white disabled:opacity-30"
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-xs font-bold text-white/40 uppercase tracking-widest px-1">Empresa</label>
-              <input 
-                disabled={isBlocked}
-                type="text"
-                placeholder="Ej. Tech Corp"
-                value={formData.company}
-                onChange={e => setFormData({ ...formData, company: e.target.value })}
-                className="w-full bg-white/5 border border-white/10 rounded-2xl py-3 px-4 text-white disabled:opacity-30"
-              />
-            </div>
-          </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-white/40 uppercase tracking-widest px-1">Nombre</label>
+                  <input 
+                    required
+                    type="text"
+                    placeholder="Ej. Juan Pérez"
+                    value={formData.name}
+                    onChange={e => setFormData({ ...formData, name: e.target.value })}
+                    className="w-full bg-white/5 border border-white/10 rounded-2xl py-3 px-4 text-white"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-white/40 uppercase tracking-widest px-1">Empresa</label>
+                  <input 
+                    type="text"
+                    placeholder="Ej. Tech Corp"
+                    value={formData.company}
+                    onChange={e => setFormData({ ...formData, company: e.target.value })}
+                    className="w-full bg-white/5 border border-white/10 rounded-2xl py-3 px-4 text-white"
+                  />
+                </div>
+              </div>
+            </>
+          )}
 
           <div className="space-y-2">
             <label className="text-xs font-bold text-white/40 uppercase tracking-widest px-1">Partner Responsable</label>
@@ -350,6 +389,21 @@ function AddClientModal({ onClose, onSuccess, products }: any) {
                 <option key={v.id} value={v.id} className="bg-[#1e293b]">{v.name}</option>
               ))}
             </select>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-xs font-bold text-white/40 uppercase tracking-widest px-1">Precio del Trato</label>
+            <input
+              required
+              disabled={isBlocked}
+              type="number"
+              min="0"
+              step="0.01"
+              placeholder="Ej. 1200.00"
+              value={formData.dealAmount}
+              onChange={e => setFormData({ ...formData, dealAmount: e.target.value })}
+              className="w-full bg-white/5 border border-white/10 rounded-2xl py-3 px-4 text-white focus:outline-none disabled:opacity-30"
+            />
           </div>
 
           <div className="space-y-2">
@@ -376,7 +430,7 @@ function AddClientModal({ onClose, onSuccess, products }: any) {
 
           <button 
             type="submit"
-            disabled={loading || isBlocked || !formData.productId}
+            disabled={loading || isBlocked || !formData.productId || !formData.dealAmount}
             className="w-full bg-primary-500 hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed text-white py-4 rounded-2xl font-bold font-heading transition-all shadow-lg shadow-primary-500/25 mt-4"
           >
             {loading ? "Registrando..." : "Confirmar Registro"}
