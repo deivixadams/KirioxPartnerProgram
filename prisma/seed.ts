@@ -1,4 +1,4 @@
-import { PrismaClient, VendorStatus, CommissionStatus, CommissionType, DealStage, RoleName, ClientStatus } from '@prisma/client'
+import { PrismaClient, PartnerStatus, CommissionStatus, CommissionType, DealStage, RoleName, ClientStatus } from '@prisma/client'
 import * as bcrypt from 'bcrypt'
 
 const prisma = new PrismaClient()
@@ -25,7 +25,7 @@ async function main() {
     create: { name: 'Kiriox Risk and Auditing', code: 'KRA-02', description: 'Auditoría avanzada.' }
   })
 
-  // 2. Crear Usuarios y Vendedores
+  // 2. Crear Usuarios y Partners
   const hashedPassword = await bcrypt.hash('kiriox123', 10)
 
   // -- ADMIN --
@@ -46,11 +46,11 @@ async function main() {
     create: {
       email: 'pedwar@kiriox.com',
       password: hashedPassword,
-      roleName: RoleName.VENDEDOR,
+      roleName: RoleName.SOCIO,
     }
   })
 
-  const pedwar = await prisma.vendor.upsert({
+  const pedwar = await prisma.partner.upsert({
     where: { userId: pedwarUser.id },
     update: { commissionPercentage: 50 },
     create: {
@@ -58,7 +58,7 @@ async function main() {
       userId: pedwarUser.id,
       commissionPercentage: 50,
       level: 1,
-      status: VendorStatus.ACTIVE,
+      status: PartnerStatus.ACTIVE,
     }
   })
 
@@ -69,11 +69,11 @@ async function main() {
     create: {
       email: 'patricia@kiriox.com',
       password: hashedPassword,
-      roleName: RoleName.VENDEDOR,
+      roleName: RoleName.SOCIO,
     }
   })
 
-  const patricia = await prisma.vendor.upsert({
+  const patricia = await prisma.partner.upsert({
     where: { userId: patriciaUser.id },
     update: { commissionPercentage: 30 },
     create: {
@@ -81,43 +81,43 @@ async function main() {
       userId: patriciaUser.id,
       commissionPercentage: 30,
       level: 1,
-      status: VendorStatus.ACTIVE,
+      status: PartnerStatus.ACTIVE,
     }
   })
 
-  // -- SUB-VENDEDOR de Pedwar (X1 - 10%) --
+  // -- SUB-PARTNER de Pedwar (X1 - 10%) --
   const x1User = await prisma.user.upsert({
-    where: { email: 'vendedor_x1@kiriox.com' },
+    where: { email: 'partner_x1@kiriox.com' },
     update: {},
     create: {
-      email: 'vendedor_x1@kiriox.com',
+      email: 'partner_x1@kiriox.com',
       password: hashedPassword,
-      roleName: RoleName.VENDEDOR,
+      roleName: RoleName.SOCIO,
     }
   })
 
-  const subVendorX1 = await prisma.vendor.upsert({
+  const subPartnerX1 = await prisma.partner.upsert({
     where: { userId: x1User.id },
-    update: { commissionPercentage: 10, parentVendorId: pedwar.id },
+    update: { commissionPercentage: 10, parentPartnerId: pedwar.id },
     create: {
-      name: 'Vendedor X1 (Junior)',
+      name: 'Partner X1 (Junior)',
       userId: x1User.id,
       commissionPercentage: 10,
       level: 2,
-      parentVendorId: pedwar.id,
-      status: VendorStatus.ACTIVE,
+      parentPartnerId: pedwar.id,
+      status: PartnerStatus.ACTIVE,
     }
   })
 
   // 3. Crear Cliente y Deal inicial para Pedwar
   const clientTech = await prisma.client.upsert({
     where: { email: 'tecnologia@ejemplo.com' },
-    update: { ownerVendorId: pedwar.id },
+    update: { ownerPartnerId: pedwar.id },
     create: {
       name: 'Tech Solutions SAS',
       email: 'tecnologia@ejemplo.com',
       company: 'Tech Solutions',
-      ownerVendorId: pedwar.id,
+      ownerPartnerId: pedwar.id,
       status: ClientStatus.ASSIGNED,
       assignedAt: new Date(),
     }
@@ -129,7 +129,7 @@ async function main() {
       amount: 10000,
       stage: DealStage.WON,
       clientId: clientTech.id,
-      vendorId: pedwar.id,
+      partnerId: pedwar.id,
       productId: risk.id,
       result: 'WON'
     }
@@ -139,7 +139,7 @@ async function main() {
   await prisma.commission.create({
     data: {
       dealId: dealWon.id,
-      vendorId: pedwar.id,
+      partnerId: pedwar.id,
       amount: 5000,
       type: CommissionType.DIRECT,
       percentage: 50,
@@ -155,7 +155,7 @@ async function main() {
       name: 'Prospecto Libre',
       email: 'prospecto_libre@empresa.com',
       status: ClientStatus.UNASSIGNED,
-      ownerVendorId: null,
+      ownerPartnerId: null,
       assignedAt: null
     }
   })

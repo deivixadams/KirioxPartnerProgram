@@ -5,7 +5,7 @@ const prisma = new PrismaClient()
 
 export async function GET() {
   try {
-    const [totalSales, vendorCount, pendingCommissions, openDeals] = await Promise.all([
+    const [totalSales, partnerCount, pendingCommissions, openDeals] = await Promise.all([
       // 1. Contar Total Sales (Solo negocios WON)
       prisma.deal.aggregate({
         _sum: {
@@ -15,8 +15,8 @@ export async function GET() {
           stage: 'WON'
         }
       }),
-      // 2. Conteo de Vendedores
-      prisma.vendor.count(),
+      // 2. Conteo de Partners
+      prisma.partner.count(),
       // 3. Comisiones Pendientes
       prisma.commission.aggregate({
         _sum: {
@@ -38,7 +38,7 @@ export async function GET() {
 
     return NextResponse.json({
       totalSales: totalSales._sum.amount || 0,
-      vendorCount: vendorCount,
+      partnerCount: partnerCount,
       pendingCommissions: pendingCommissions._sum.amount || 0,
       openDeals: openDeals
     })

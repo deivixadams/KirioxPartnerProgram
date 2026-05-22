@@ -1,15 +1,22 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
 import { UsersService } from '@/lib/services/users.service';
 import { prisma } from '@/lib/prisma';
+import { getServerSession } from "next-auth/next"
+import { authOptions } from "../../../api/auth/[...nextauth]/route"
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
-    const { newPassword, email } = await req.json();
+    const { newPassword } = await req.json();
 
-    // Since we don't have NextAuth yet, we'll find the user by email
-    // In a real app, this would be const userId = session.user.id
+    const session = await getServerSession(authOptions)
+    if (!session || !session.user) {
+      return NextResponse.json({ error: 'No autenticado' }, { status: 401 });
+    }
+
+    const userId = (session.user as any).id;
+
     const user = await prisma.user.findUnique({
-      where: { email }
+      where: { id: userId }
     });
 
     if (!user) {

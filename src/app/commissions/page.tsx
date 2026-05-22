@@ -10,8 +10,10 @@ import {
 } from "lucide-react"
 import { cn, formatCurrency } from "@/lib/utils"
 import { CommissionsAPI } from "@/lib/api"
+import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
 
 export default function CommissionsPage() {
+  const { isAdmin, partnerData, loading: userLoading } = useCurrentUser()
   const [commissions, setCommissions] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -30,7 +32,22 @@ export default function CommissionsPage() {
     }
   }
 
-  const totals = commissions.reduce((acc, curr) => {
+  const filteredCommissions = commissions.filter(comm => {
+    if (isAdmin) return true;
+    if (!partnerData) return false;
+    
+    const visibleIds = [partnerData.id];
+    if (partnerData.parentPartnerId) {
+      visibleIds.push(partnerData.parentPartnerId);
+    }
+    if (partnerData.subPartners) {
+      visibleIds.push(...partnerData.subPartners.map((sub: any) => sub.id));
+    }
+    
+    return visibleIds.includes(comm.partnerId || comm.partner?.id);
+  });
+
+  const totals = filteredCommissions.reduce((acc, curr) => {
     if (curr.status === 'PAID') acc.paid += curr.amount
     else acc.pending += curr.amount
     return acc
@@ -46,6 +63,8 @@ export default function CommissionsPage() {
     PAID: 'PAGADA',
     APPROVED: 'APROBADA'
   }
+
+  if (userLoading) return null;
 
   return (
     <div className="space-y-8 pb-10">
@@ -102,7 +121,7 @@ export default function CommissionsPage() {
           <table className="w-full">
             <thead>
               <tr className="text-left text-[10px] uppercase font-bold text-white/30 border-b border-white/5">
-                <th className="px-8 py-4">Vendedor</th>
+                <th className="px-8 py-4">Partner</th>
                 <th className="px-8 py-4">Negocio</th>
                 <th className="px-8 py-4 text-center">Tipo</th>
                 <th className="px-8 py-4 text-right">Tasa</th>
@@ -112,14 +131,14 @@ export default function CommissionsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5 text-white/80">
-              {commissions.map((comm) => (
+              {filteredCommissions.map((comm) => (
                 <tr key={comm.id} className="hover:bg-white/5 transition-all group">
                   <td className="px-8 py-4">
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-xs font-bold">
-                        {comm.vendor.name[0]}
+                        {comm.partner.name[0]}
                       </div>
-                      <span className="text-sm font-medium">{comm.vendor.name}</span>
+                      <span className="text-sm font-medium">{comm.partner.name}</span>
                     </div>
                   </td>
                   <td className="px-8 py-4">
@@ -161,7 +180,7 @@ export default function CommissionsPage() {
           </table>
         </div>
 
-        {commissions.length === 0 && !loading && (
+        {filteredCommissions.length === 0 && !loading && (
           <div className="text-center py-20">
             <DollarSign className="w-12 h-12 text-white/10 mx-auto mb-4" />
             <p className="text-white/30">No hay comisiones registradas aún.</p>

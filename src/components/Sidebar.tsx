@@ -1,8 +1,9 @@
 "use client"
 
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
+import { signOut } from "next-auth/react"
 import { 
   LayoutDashboard, 
   Package, 
@@ -11,14 +12,15 @@ import {
   TrendingUp, 
   DollarSign,
   Settings,
-  Bell
+  Bell,
+  LogOut
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useState, useEffect } from "react"
 
 const navigation = [
   { name: 'Tablero', href: '/', icon: LayoutDashboard },
-  { name: 'Vendedores', href: '/vendors', icon: Users },
+  { name: 'Partners', href: '/partners', icon: Users },
   { name: 'Productos', href: '/products', icon: Package },
   { name: 'Clientes', href: '/clients', icon: UserCircle },
   { name: 'Pipeline de Ventas', href: '/pipeline', icon: TrendingUp },
@@ -33,7 +35,12 @@ interface SidebarProps {
 
 export function Sidebar({ isExpanded, onMouseEnter, onMouseLeave }: SidebarProps) {
   const pathname = usePathname()
+  const router = useRouter()
   const [notifications, setNotifications] = useState<any[]>([])
+
+  async function handleLogout() {
+    await signOut({ callbackUrl: '/login' })
+  }
 
   useEffect(() => {
     const fetchNotifications = async () => {
@@ -61,7 +68,7 @@ export function Sidebar({ isExpanded, onMouseEnter, onMouseLeave }: SidebarProps
       transition={{ type: "spring", stiffness: 300, damping: 30 }}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
-      className="fixed left-0 top-0 h-full glass-card border-r border-l-0 rounded-none flex flex-col p-4 m-0 z-50 overflow-hidden"
+      className="fixed left-0 top-0 bottom-0 min-w-[80px] glass-card border-r border-l-0 rounded-none flex flex-col p-4 m-0 z-50 overflow-y-auto overflow-x-hidden"
     >
       <div className="flex items-center gap-4 mb-10 px-2 h-10">
         <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-gradient-to-br from-primary-400 to-accent-purple flex items-center justify-center font-bold text-white shadow-lg shadow-primary-500/20">
@@ -169,6 +176,32 @@ export function Sidebar({ isExpanded, onMouseEnter, onMouseLeave }: SidebarProps
             )}
           </AnimatePresence>
         </div>
+
+        {/* Logout button */}
+        <button
+          type="button"
+          title="Cerrar Sesión"
+          aria-label="Cerrar Sesión"
+          onClick={handleLogout}
+          className={cn(
+            "flex items-center gap-4 h-10 w-full rounded-xl transition-all duration-300 group text-white/60 hover:text-red-400 hover:bg-red-500/5 focus:outline-none focus:ring-2 focus:ring-red-400/30",
+            isExpanded ? "px-3" : "justify-center px-0"
+          )}
+        >
+          <LogOut className="w-5 h-5 flex-shrink-0" />
+          <AnimatePresence>
+            {isExpanded && (
+              <motion.span
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -10 }}
+                className="text-sm font-medium whitespace-nowrap"
+              >
+                Cerrar Sesión
+              </motion.span>
+            )}
+          </AnimatePresence>
+        </button>
       </div>
     </motion.div>
   )

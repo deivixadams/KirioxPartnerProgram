@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, ReactNode } from "react"
+import { usePathname } from "next/navigation"
 import { motion } from "framer-motion"
 import { Sidebar } from "./Sidebar"
 
@@ -9,7 +10,14 @@ interface ClientLayoutProps {
 }
 
 export function ClientLayout({ children }: ClientLayoutProps) {
+  const pathname = usePathname()
+  const isAuthPage = pathname?.startsWith('/login')
   const [isExpanded, setIsExpanded] = useState(false)
+
+  // Auth pages use their own layout — no sidebar
+  if (isAuthPage) {
+    return <>{children}</>
+  }
 
   return (
     <div className="flex h-screen overflow-hidden bg-background text-foreground">

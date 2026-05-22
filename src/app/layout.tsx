@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { ClientLayout } from "@/components/ClientLayout";
+import { AuthProvider } from "@/components/AuthProvider";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -18,9 +19,11 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${inter.className} h-screen overflow-hidden`} suppressHydrationWarning>
-        <ClientLayout>
-          {children}
-        </ClientLayout>
+        <AuthProvider>
+          <ClientLayout>
+            {children}
+          </ClientLayout>
+        </AuthProvider>
       </body>
     </html>
   );

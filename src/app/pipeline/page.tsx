@@ -12,6 +12,7 @@ import {
 } from "lucide-react"
 import { cn, formatCurrency } from "@/lib/utils"
 import { DealsAPI } from "@/lib/api"
+import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
 
 const STAGES = [
   'PROSPECT',
@@ -38,6 +39,7 @@ const STAGE_COLORS: any = {
 }
 
 export default function PipelinePage() {
+  const { isAdmin, partnerId, loading: userLoading } = useCurrentUser()
   const [deals, setDeals] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -65,6 +67,13 @@ export default function PipelinePage() {
     }
   }
 
+  const filteredDeals = deals.filter(deal => {
+    if (isAdmin) return true;
+    return deal.partnerId === partnerId;
+  });
+
+  if (userLoading) return null;
+
   return (
     <div className="space-y-8 pb-10">
       <div className="flex items-center justify-between">
@@ -91,13 +100,13 @@ export default function PipelinePage() {
             )}>
               <span className="text-xs font-black tracking-widest uppercase">{STAGE_LABELS[stage]}</span>
               <span className="text-xs font-bold bg-white/10 px-2 py-0.5 rounded-full">
-                {deals.filter(d => d.stage === stage).length}
+                {filteredDeals.filter(d => d.stage === stage).length}
               </span>
             </div>
 
             <div className="flex-1 space-y-4">
               <AnimatePresence mode="popLayout">
-                {deals
+                {filteredDeals
                   .filter((deal) => deal.stage === stage)
                   .map((deal) => (
                     <DealCard 
@@ -108,7 +117,7 @@ export default function PipelinePage() {
                   ))}
               </AnimatePresence>
               
-              {deals.filter(d => d.stage === stage).length === 0 && (
+              {filteredDeals.filter(d => d.stage === stage).length === 0 && (
                 <div className="border border-dashed border-white/5 rounded-2xl h-32 flex items-center justify-center text-white/20 text-sm italic">
                   Sin negocios en esta etapa
                 </div>
@@ -149,7 +158,7 @@ function DealCard({ deal, onMove }: { deal: any, onMove: (s: string) => void }) 
         </div>
         <div className="flex items-center gap-2 text-xs text-white/50">
           <User className="w-3.5 h-3.5" />
-          <span>{deal.vendor.name}</span>
+          <span>{deal.partner.name}</span>
         </div>
         <div className="flex items-center gap-2 text-xs text-white/50">
           <CreditCard className="w-3.5 h-3.5" />

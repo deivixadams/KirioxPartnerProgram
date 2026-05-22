@@ -4,24 +4,31 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "predev": "npm run docker:up && npm run prisma:ensure",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "docker:up": "docker compose up -d db",
+    "docker:down": "docker compose down",
     "prisma:generate": "prisma generate",
     "prisma:push": "prisma db push",
-    "prisma:seed": "prisma db seed"
+    "prisma:seed": "prisma db seed",
+    "prisma:ensure": "prisma generate && prisma db push && prisma db seed"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.4.1",
+    "@types/nodemailer": "^7.0.0",
     "axios": "^1.14.0",
     "bcrypt": "^6.0.0",
     "clsx": "^2.1.1",
     "framer-motion": "^12.38.0",
     "lucide-react": "^1.7.0",
     "next": "16.2.2",
+    "next-auth": "^4.24.14",
+    "nodemailer": "^7.0.7",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "tailwind-merge": "^3.5.0"

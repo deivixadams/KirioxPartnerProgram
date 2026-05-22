@@ -6,9 +6,9 @@ export class CommissionsService {
     const deal = await prisma.deal.findUnique({
       where: { id: dealId },
       include: {
-        vendor: {
+        partner: {
           include: {
-            parentVendor: true,
+            parentPartner: true,
           },
         },
       },
@@ -16,42 +16,37 @@ export class CommissionsService {
 
     if (!deal) throw new Error('Deal not found');
 
-    const vendor = deal.vendor;
+    const partner = deal.partner;
     const commissions: Prisma.CommissionCreateManyInput[] = [];
 
-    // 1. Direct Commission (Vendedor que cierra)
-    const directPercentage = vendor.commissionPercentage;
+    // Determine direct commission percentage based on partner level
+    // Level 1 (no parent): 50% | Level 2 (with parent): use partner.commissionPercentage
+    const isLevel1 = !partner.parentPartner;
+    const directPercentage = isLevel1 ? 50 : partner.commissionPercentage;
     const directAmount = (deal.amount * directPercentage) / 100;
 
     commissions.push({
       dealId: deal.id,
-      vendorId: deal.id, // Error check: vendorId should be deal.vendorId
+      partnerId: deal.partnerId,
       type: CommissionType.DIRECT,
       percentage: directPercentage,
       amount: directAmount,
     });
 
-    // 2. Override Commission (Diferencial para el Padre)
-    // El modelo es: el total disponible es el % del Padre. 
-    // El Subvendedor toma su parte y el Padre toma el resto.
-    if (vendor.parentVendor) {
-      const parent = vendor.parentVendor;
-      const overridePercentage = Math.max(0, parent.commissionPercentage - vendor.commissionPercentage);
+    // Override Commission: Parent partner gets 20% (only if partner is Level 2)
+    if (partner.parentPartner) {
+      const parent = partner.parentPartner;
+      const overridePercentage = 20; // Fixed 20% for parent
       const overrideAmount = (deal.amount * overridePercentage) / 100;
 
-      if (overridePercentage > 0) {
-        commissions.push({
-          dealId: deal.id,
-          vendorId: parent.id,
-          type: CommissionType.OVERRIDE,
-          percentage: overridePercentage,
-          amount: overrideAmount,
-        });
-      }
+      commissions.push({
+        dealId: deal.id,
+        partnerId: parent.id,
+        type: CommissionType.OVERRIDE,
+        percentage: overridePercentage,
+        amount: overrideAmount,
+      });
     }
-
-    // Fix vendorId error in direct commission push
-    commissions[0].vendorId = deal.vendorId;
 
     return prisma.commission.createMany({
       data: commissions,
@@ -61,7 +56,7 @@ export class CommissionsService {
   static async findAll() {
     return prisma.commission.findMany({
       include: {
-        vendor: true,
+        partner: true,
         deal: {
           include: {
             product: true,
