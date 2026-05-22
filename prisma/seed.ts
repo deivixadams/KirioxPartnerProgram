@@ -69,7 +69,7 @@ async function main() {
     create: {
       email: 'patricia@kiriox.com',
       password: hashedPassword,
-      roleName: RoleName.VENDEDOR,
+      roleName: RoleName.SOCIO,
     }
   })
 
@@ -92,7 +92,7 @@ async function main() {
     create: {
       email: 'partner_x1@kiriox.com',
       password: hashedPassword,
-      roleName: RoleName.VENDEDOR,
+      roleName: RoleName.SOCIO,
     }
   })
 

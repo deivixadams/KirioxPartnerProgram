@@ -49,16 +49,34 @@ export const authOptions: NextAuthOptions = {
       }
     })
   ],
-  session: { strategy: "jwt" },
+  session: { 
+    strategy: "jwt",
+    maxAge: 24 * 60 * 60 // 1 día (en segundos)
+  },
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
         token.roleName = (user as any).roleName
         token.id = user.id
       }
+
+      // Verificamos si el partner fue suspendido luego de iniciar sesión
+      if (token.id) {
+        const partner = await prisma.partner.findUnique({ where: { userId: token.id as string } })
+        if (partner?.status === 'SUSPENDED' || partner?.status === 'RETIRED') {
+          token.isSuspended = true
+        } else {
+          token.isSuspended = false
+        }
+      }
+
       return token
     },
     async session({ session, token }) {
+      if (token.isSuspended) {
+        return {} as any; // Destruye la sesión
+      }
+
       if (session.user) {
         (session.user as any).roleName = token.roleName;
         (session.user as any).id = token.id;

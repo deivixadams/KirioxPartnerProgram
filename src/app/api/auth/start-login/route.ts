@@ -8,7 +8,13 @@ const OTP_EXPIRY_MINUTES = 5
 
 export async function POST(req: Request) {
   try {
-    const { email, password } = await req.json()
+    let body;
+    try {
+      body = await req.json()
+    } catch (e) {
+      return NextResponse.json({ error: 'Petición malformada' }, { status: 400 })
+    }
+    const { email, password } = body
 
     if (!email || !password) {
       return NextResponse.json({ error: 'Email y contraseña requeridos' }, { status: 400 })
